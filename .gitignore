@@ -1,3 +1,8 @@
 raw_data/
 *.ipynb
 .python-version
+.env
+
+*.parquet
+*.pgn
+*.pgn*
