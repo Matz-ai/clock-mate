@@ -296,6 +296,7 @@ if __name__ == "__main__":
     main()
 
 
-#Commande pour l'utiliser : python lichess_pgn_to_parquet_with_evals.py \                                              [🐍 lewagon]
+#Commande pour l'utiliser : python import_data.py \                                              [🐍 lewagon]
 #   --pgn lichess_db_standard_rated_2025-07.pgn.zst \
 #   --max-games 100000 --out-dir data_bis
+# bien paramètrer la commande
