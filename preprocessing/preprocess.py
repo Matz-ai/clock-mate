@@ -45,7 +45,7 @@ def preprocess_data(df_game_info, df_moves):
     df_fusion["Termination"] = df_fusion["Termination"].map(mapping_termination)
 
     # Step 6: Drop additional features for the dummy model
-    deleted_fusion_features = ['game_id', 'BaseTime_s', 'Increment_s', 'fen_before']
+    deleted_fusion_features = ['game_id', 'BaseTime_s', 'Increment_s']
     data_dummy = df_fusion.drop(deleted_fusion_features, axis=1)
 
     # Step 7: Fill NaN values with 0
