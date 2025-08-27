@@ -23,6 +23,8 @@ def preprocess_data(df_game_info, df_moves):
         (df_game_info_copy['BaseTime_s'] != 0.0) &
         (~df_game_info_copy['BaseTime_s'].isna())
     ].copy()
+    
+    df_moves_copy = df_moves_copy[~df_moves_copy['clock_s'].isna()].copy()
 
     # Step 2: Drop specified columns
     deleted_games_features = [
@@ -33,7 +35,7 @@ def preprocess_data(df_game_info, df_moves):
     df_game_info_copy = df_game_info_copy.drop(deleted_games_features, axis=1)
 
     deleted_moves_features = [
-        'move_number', 'move_san', 'move_uci', 'comment', 'nags', "emt_s"
+        'move_number', 'move_san', 'move_uci', 'comment', 'nags', "emt_s", "T"
     ]
     # No inplace=True, assign the result back to the variable
     df_moves_copy = df_moves_copy.drop(deleted_moves_features, axis=1)
