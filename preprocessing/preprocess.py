@@ -50,7 +50,7 @@ def preprocess_data(df_game_info, df_moves):
     df_fusion["BlackElo"] = df_fusion["BlackElo"].astype(int)
     df_fusion["eval"]= df_fusion["eval"].astype(int)
 
-    # Step 6: Drop additional features for the dummy model
+    # Step 6: Drop additional features for the dummy mode
     deleted_fusion_features = ['game_id', 'Increment_s']
     data_dummy = df_fusion.drop(deleted_fusion_features, axis=1)
 
