@@ -27,7 +27,7 @@ def fens_to_arrays(fens):
     return out
 
 
-def delta_win(df, game_id='game_id', eval_col='eval', color_col='color'):
+def delta_eval(df, game_id='game_id', eval_col='eval', color_col='color'):
     """
     Calculate the change in chess position evaluation between consecutive moves.
     Can be used for eval or win probability.
