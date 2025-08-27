@@ -11,27 +11,35 @@ def preprocess_data(df_game_info, df_moves):
     Returns:
         pd.DataFrame: The preprocessed and merged DataFrame.
     """
-    # Step 1: Drop unwanted game cadence from df_game_info
-    df_game_info = df_game_info[(df_game_info["Cadence"] != "Bullet")]
-    df_game_info = df_game_info[df_game_info['BaseTime_s'] != 0.0]
-    df_game_info = df_game_info[~df_game_info['BaseTime_s'].isna()]
-    df_moves = df_moves[~df_moves['BaseTime_s'].isna()]
 
-    # Step 2: Drop specified columns from both dataframes
+    # Création de copie des dataframe
+
+    df_moves_copy = df_moves.copy()
+    df_game_info_copy = df_game_info.copy()
+
+    # Step 1: Drop unwanted game cadence from df_game_info
+    df_game_info_copy = df_game_info_copy[
+        (df_game_info_copy["Cadence"] != "Bullet") &
+        (df_game_info_copy['BaseTime_s'] != 0.0) &
+        (~df_game_info_copy['BaseTime_s'].isna())
+    ].copy()
+
+    # Step 2: Drop specified columns
     deleted_games_features = [
         "Event", "Site", "Date", "Round", "White", "Black", "UTCDate",
         "UTCTime", "ECO", 'Opening', 'WhiteRatingDiff', 'BlackRatingDiff',
         'TimeControl', 'Cadence', 'BlackTitle', 'WhiteTitle'
     ]
-    df_game_info.drop(deleted_games_features, axis=1, inplace=True)
+    df_game_info_copy = df_game_info_copy.drop(deleted_games_features, axis=1)
 
     deleted_moves_features = [
         'move_number', 'move_san', 'move_uci', 'comment', 'nags', "emt_s"
     ]
-    df_moves.drop(deleted_moves_features, axis=1, inplace=True)
+    # No inplace=True, assign the result back to the variable
+    df_moves_copy = df_moves_copy.drop(deleted_moves_features, axis=1)
 
     # Step 3: Merge the two dataframes
-    df_fusion = pd.merge(df_game_info, df_moves, on="game_id")
+    df_fusion = pd.merge(df_game_info_copy, df_moves_copy, on="game_id")
 
     # Step 4: Encode categorical columns
     mapping_color = {"w": 0, "b": 1}
