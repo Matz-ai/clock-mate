@@ -20,7 +20,7 @@ def fens_to_arrays(fens):
             col = 0
             for ch in rank:
                 if ch.isdigit():
-                    col += int(ch)
+                    col += int(ch) 
                 else:
                     out[i, row, col, piece_to_channel[ch]] = 1
                     col += 1

@@ -1,6 +1,7 @@
 import pandas as pd
+from preprocessing.fen_transformation import eval_to_win_probability, delta_eval
 
-def preprocess_data(df_game_info, df_moves):
+def preprocess_data(df_game= "df_game_info", df_moves= "df_moves"):
     """
     Performs data preprocessing steps on chess game dataframes.
 
@@ -15,7 +16,10 @@ def preprocess_data(df_game_info, df_moves):
     # Création de copie des dataframe
 
     df_moves_copy = df_moves.copy()
-    df_game_info_copy = df_game_info.copy()
+    df_game_info_copy = df_game.copy()
+
+    df_moves_copy["win_probability"] = eval_to_win_probability(df_moves_copy["eval"])
+    df_moves_copy["delta_eval"] = delta_eval(df_moves_copy)
 
     # Step 1: Drop unwanted game cadence from df_game_info
     df_game_info_copy = df_game_info_copy[
@@ -35,7 +39,7 @@ def preprocess_data(df_game_info, df_moves):
     df_game_info_copy = df_game_info_copy.drop(deleted_games_features, axis=1)
 
     deleted_moves_features = [
-        'move_number', 'move_san', 'move_uci', 'comment', 'nags', "emt_s", "T"
+        'move_number', 'move_san', 'move_uci', 'comment', 'nags', "emt_s"
     ]
     # No inplace=True, assign the result back to the variable
     df_moves_copy = df_moves_copy.drop(deleted_moves_features, axis=1)
