@@ -27,7 +27,7 @@ def fens_to_arrays(fens):
     return out
 
 
-def delta_eval(df, game_id='game_id', eval_col='eval', color_col='color'):
+def delta_win(df, game_id='game_id', eval_col='eval', color_col='color'):
     """
     Calculate the change in chess position evaluation between consecutive moves.
     Can be used for eval or win probability.
@@ -53,11 +53,19 @@ def delta_eval(df, game_id='game_id', eval_col='eval', color_col='color'):
         - Negative values indicate deterioration for the current player
 
     """
+
     # Create a copy to avoid modifying the original DataFrame
     df_copy = df.copy()
 
     # Calculate the difference between consecutive evaluations within each game
     df_copy['delta_eval'] = df_copy.groupby(game_id)[eval_col].diff()
+
+    first_moves = df_copy.groupby(game_id).head(1).index
+
+    if eval_col == 'eval':
+        df_copy.loc[first_moves, 'delta_eval'] = df_copy.loc[first_moves, eval_col] - 18
+    else:
+        df_copy.loc[first_moves, 'delta_eval'] = df_copy.loc[first_moves, eval_col] - 50
 
     # For black moves, flip the sign to show evaluation change from Black's perspective
     # This makes positive deltas always mean "good for the current player"
