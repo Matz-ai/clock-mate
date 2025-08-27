@@ -24,6 +24,8 @@ def preprocess_data(df_game_info, df_moves):
         (~df_game_info_copy['BaseTime_s'].isna())
     ].copy()
 
+    df_moves_copy = df_moves_copy[~df_moves_copy['clock_s'].isna()].copy()
+
     # Step 2: Drop specified columns
     deleted_games_features = [
         "Event", "Site", "Date", "Round", "White", "Black", "UTCDate",
@@ -33,7 +35,7 @@ def preprocess_data(df_game_info, df_moves):
     df_game_info_copy = df_game_info_copy.drop(deleted_games_features, axis=1)
 
     deleted_moves_features = [
-        'move_number', 'move_san', 'move_uci', 'comment', 'nags', "emt_s"
+        'move_number', 'move_san', 'move_uci', 'comment', 'nags', "emt_s", "T"
     ]
     # No inplace=True, assign the result back to the variable
     df_moves_copy = df_moves_copy.drop(deleted_moves_features, axis=1)
@@ -60,13 +62,13 @@ def preprocess_data(df_game_info, df_moves):
 
     # Step 6: Drop additional features for the dummy mode
     deleted_fusion_features = ['game_id', 'Increment_s']
-    data_dummy = df_fusion.drop(deleted_fusion_features, axis=1)
+    data = df_fusion.drop(deleted_fusion_features, axis=1)
 
     # Step 7: Fill NaN values with 0
-    data_dummy["time_spent_s"].fillna(0, inplace=True)
+    data["time_spent_s"].fillna(0, inplace=True)
 
     # Step 8: Keep games with minimum 2000 elo
     filtre_elo = (df_fusion['WhiteElo'] >= 2000) | (df_fusion['BlackElo'] >= 2000)
-    data = data_dummy[filtre_elo]
+    data = data[filtre_elo]
 
     return data
