@@ -29,26 +29,29 @@ def fens_to_arrays(fens):
 
 
 def delta_eval(df):
-
-    # Create a copy to avoid modifying the original DataFrame
     df_copy = df.copy()
+    factor = 0.00368208
 
-    # Calculate the difference between consecutive evaluations within each game
+    # Compute win probabilities
+    df_copy['win_prob'] = 50 + 50 * (2 / (1 + np.exp(-factor * df_copy['eval'])) - 1)
+
+    # If last move of a game is NaN, assign 100 for white, 0 for black
+    last_moves = df_copy.groupby('game_id').tail(1)
+    mask = last_moves['eval'].isna()
+    df_copy.loc[last_moves[mask].index, 'win_prob'] = last_moves[mask]['color'].map({'w': 100, 'b': 0})
+
+    # Compute deltas
     df_copy['delta_eval'] = df_copy.groupby('game_id')['win_prob'].diff()
 
-    first_moves = df_copy.groupby('game_id').head(1).index
-    last_moves = df_copy.groupby('game_id').tail(1)
-    last_moves_nan = last_moves[last_moves['eval'].isna()].index
+    # First moves: baseline ~52 for white
+    first_idxs = df_copy.groupby('game_id').head(1).index
+    df_copy.loc[first_idxs, 'delta_eval'] = df_copy.loc[first_idxs, 'win_prob'] - 52
 
-    df_copy.loc[first_moves, 'delta_eval'] = df_copy.loc[first_moves, 'win_prob'] - 52
-    df_copy.loc[last_moves_nan, 'eval'] = df_copy.loc[last_moves_nan, 'color'].map({'w': 1, 'b': -1})
-
-    # For black moves, flip the sign to show evaluation change from Black's perspective
-    # This makes positive deltas always mean "good for the current player"
-    black_moves = df_copy['color'] == 'b'
-    df_copy.loc[black_moves, 'delta_eval'] = -df_copy.loc[black_moves, 'delta_eval']
+    # Flip sign for black moves
+    df_copy.loc[df_copy['color'] == 'b', 'delta_eval'] *= -1
 
     return df_copy['delta_eval']
+
 
 
 def eval_to_win_prob(eval_series):
@@ -62,6 +65,8 @@ def eval_to_win_prob(eval_series):
 
     # Calculate win probability using logistic transformation
     win_prob = 50 + 50 * (2 / (1 + np.exp(-conversion_factor * eval_array)) - 1)
+
+
 
     return win_prob
 
