@@ -50,7 +50,7 @@ def delta_eval(df):
     # Flip sign for black moves
     df_copy.loc[df_copy['color'] == 'b', 'delta_eval'] *= -1
 
-    return df_copy['delta_eval']
+    return df_copy
 
 
 
