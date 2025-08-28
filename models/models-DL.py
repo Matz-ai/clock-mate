@@ -4,14 +4,12 @@ import tensorflow as tf
 from tensorflow.keras import layers, Model, optimizers
 
 
-def init_model():    # Hypers simples
-    LR = 1e-3
-    BATCH = 1024
-    EPOCHS = 50
+def init_model(X):
 
     # Shapes d'exemple — adapte C (canaux board) et S (nb de scalaires)
     C = 12     #(nb piece en tout donc 6 pièces de chaque coté)
-    S = 8     # ply, side_to_move, clock_frac_left, prev_time_frac, eval_tanh (optionnel)
+    S = X[1]
+    LR = 1e-3
 
     # === Inputs ===
     board_in = layers.Input(shape=(8, 8, C), name="board")        # si tu n'utilises pas le board, supprime cette branche
@@ -40,8 +38,21 @@ def init_model():    # Hypers simples
         optimizer=optimizers.Adam(learning_rate=LR),
         metrics=["mae"]
     )
+    return model
+
+
+BATCH = 64
+EPOCHS = 4
+patience = 5
+
+def start_model(model, df_CNN_array, df_tabular, y, patience = patience, BATCH = BATCH, EPOCHS = EPOCHS):
+
 
     callbacks = [
-        tf.keras.callbacks.EarlyStopping(monitor="val_mae", patience=5, restore_best_weights=True)
+    tf.keras.callbacks.EarlyStopping(monitor="mae", patience, restore_best_weights=True)
     ]
-    return model
+    history = model.fit(
+    {"board": df_CNN_array, "scalars": df_tabular}, y,
+    batch_size=BATCH, epochs=EPOCHS, callbacks=callbacks, verbose=1
+    )
+    return history

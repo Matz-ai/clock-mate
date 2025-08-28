@@ -178,3 +178,4 @@ raw_data/
 *.parquet
 *.pgn
 *.pgn*
+*.joblib
