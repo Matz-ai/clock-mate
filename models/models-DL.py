@@ -46,8 +46,6 @@ EPOCHS = 4
 patience = 5
 
 def start_model(model, df_CNN_array, df_tabular, y, patience = patience, BATCH = BATCH, EPOCHS = EPOCHS):
-
-
     callbacks = [
     tf.keras.callbacks.EarlyStopping(monitor="mae", patience, restore_best_weights=True)
     ]
