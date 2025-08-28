@@ -51,7 +51,7 @@ def delta_eval(df):
     df_copy.loc[df_copy['color'] == 'b', 'delta_eval'] *= -1
 
     # Return only the relevant columns
-    return df_copy[['win_prob', 'delta_eval']]
+    return df_copy
 
 
 
