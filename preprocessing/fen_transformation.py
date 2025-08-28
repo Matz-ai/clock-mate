@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import chess
 
 
 piece_to_channel = {
@@ -20,7 +21,7 @@ def fens_to_arrays(fens):
             col = 0
             for ch in rank:
                 if ch.isdigit():
-                    col += int(ch) 
+                    col += int(ch)
                 else:
                     out[i, row, col, piece_to_channel[ch]] = 1
                     col += 1
@@ -103,3 +104,43 @@ def eval_to_win_probability(eval_series):
     win_prob = 50 + 50 * (2 / (1 + np.exp(-conversion_factor * eval_array)) - 1)
 
     return win_prob
+
+def chess_features(df):
+    def count_material(board):
+        piece_values = {chess.PAWN: 1, chess.KNIGHT: 3, chess.BISHOP: 3,
+                       chess.ROOK: 5, chess.QUEEN: 9, chess.KING: 0}
+        white_material = sum(piece_values[piece.piece_type]
+                            for piece in board.piece_map().values()
+                            if piece.color == chess.WHITE)
+        black_material = sum(piece_values[piece.piece_type]
+                            for piece in board.piece_map().values()
+                            if piece.color == chess.BLACK)
+        return white_material, black_material
+
+    num_legal_moves_list = []
+    num_captures_list = []
+    material_white_list = []
+    material_black_list = []
+    is_check_list = []
+
+    for fen in df['fen_before']:
+        board = chess.Board(fen)
+        num_legal_moves = len(list(board.legal_moves))
+        num_captures = len(list(board.generate_legal_captures()))
+        material_white, material_black = count_material(board)
+        is_check = board.is_check()
+
+        num_legal_moves_list.append(num_legal_moves)
+        num_captures_list.append(num_captures)
+        material_white_list.append(material_white)
+        material_black_list.append(material_black)
+        is_check_list.append(int(is_check))
+
+    # Add new columns to the DataFrame
+    df['num_legal_moves'] = num_legal_moves_list
+    df['num_captures'] = num_captures_list
+    df['material_white'] = material_white_list
+    df['material_black'] = material_black_list
+    df['is_check'] = is_check_list
+
+    return df
