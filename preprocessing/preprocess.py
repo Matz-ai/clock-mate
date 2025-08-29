@@ -79,7 +79,7 @@ def preprocess_data(df_game= "df_game_info", df_moves= "df_moves"):
 
 
 #New Version
-def preproc(df_game_info, df_moves):
+def preproc_full(df_game_info, df_moves, include_df=False):
     #Inital delete
     deleted_games_features = [
         "Event", "Site", "Date", "Round", "White", "Black", "UTCDate",
@@ -138,7 +138,10 @@ def preproc(df_game_info, df_moves):
 
     X = df_full[['color', 'ply', 'WhiteWin', 'BlackWin', 'delta_eval', 'WhiteElo',
              'BlackElo', 'num_legal_moves', 'num_captures',
-             'material_white', 'material_black', 'is_check']]
+             'material_white', 'material_black', 'is_check', 'clock_s']]
     y = df_full[['rel_time']]
 
-    return X, y
+    if include_df == True:
+        return df_full, X, y
+    else:
+        return X, y
