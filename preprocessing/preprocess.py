@@ -147,7 +147,7 @@ def create_X_y(df_full):
     return X, y
 
 
-def train_test_split(df_full, split = .85):
+def train_test_split_games(df_full, split = .85):
     train_index = round(df_full['game_id'].nunique() * split)
 
     train_ids = df_full['game_id'].unique()[:train_index]
