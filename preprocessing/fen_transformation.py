@@ -28,71 +28,35 @@ def fens_to_arrays(fens):
     return out
 
 
-def delta_eval(df, game_id='game_id', eval_col='eval', color_col='color'):
-    """
-    Calculate the change in chess position evaluation between consecutive moves.
-    Can be used for eval or win probability.
-
-    This function computes how much the position evaluation changed from one move
-    to the next, with the perspective adjusted based on whose turn it is.
-
-    Parameters:
-    -----------
-    df : pandas.DataFrame
-    game_id : str, default 'game_id'
-        Column name containing unique game identifiers
-    eval_col : str, default 'eval'
-        Column name containing position evaluation scores
-    color_col : str, default 'color'
-        Column name indicating piece color ('w' for white, 'b' for black)
-
-    Returns:
-    --------
-    pandas.Series
-        Series containing evaluation deltas, where:
-        - Positive values indicate improvement for the current player
-        - Negative values indicate deterioration for the current player
-
-    """
-
-    # Create a copy to avoid modifying the original DataFrame
+def delta_eval(df):
     df_copy = df.copy()
+    factor = 0.00368208
 
-    # Calculate the difference between consecutive evaluations within each game
-    df_copy['delta_eval'] = df_copy.groupby(game_id)[eval_col].diff()
+    # Compute win probabilities
+    df_copy['win_prob'] = 50 + 50 * (2 / (1 + np.exp(-factor * df_copy['eval'])) - 1)
 
-    first_moves = df_copy.groupby(game_id).head(1).index
+    # If last move of a game is NaN, assign 100 for white, 0 for black
+    last_moves = df_copy.groupby('game_id').tail(1)
+    mask = last_moves['eval'].isna()
+    df_copy.loc[last_moves[mask].index, 'win_prob'] = last_moves[mask]['color'].map({'w': 100, 'b': 0})
 
-    if eval_col == 'eval':
-        df_copy.loc[first_moves, 'delta_eval'] = df_copy.loc[first_moves, eval_col] - 18
-    else:
-        df_copy.loc[first_moves, 'delta_eval'] = df_copy.loc[first_moves, eval_col] - 50
+    # Compute deltas
+    df_copy['delta_eval'] = df_copy.groupby('game_id')['win_prob'].diff()
 
-    # For black moves, flip the sign to show evaluation change from Black's perspective
-    # This makes positive deltas always mean "good for the current player"
-    black_moves = df_copy[color_col] == 'b'
-    df_copy.loc[black_moves, 'delta_eval'] = -df_copy.loc[black_moves, 'delta_eval']
+    # First moves: baseline ~52 for white
+    first_idxs = df_copy.groupby('game_id').head(1).index
+    df_copy.loc[first_idxs, 'delta_eval'] = df_copy.loc[first_idxs, 'win_prob'] - 52
 
-    return df_copy['delta_eval']
+    # Flip sign for black moves
+    df_copy.loc[df_copy['color'] == 'b', 'delta_eval'] *= -1
+
+    # Return only the relevant columns
+    return df_copy
 
 
-def eval_to_win_probability(eval_series):
-    """
-    Convert chess engine evaluation (in centipawns) to win probability percentage.
 
-    Uses a logistic function calibrated to convert centipawn evaluations into
-    estimated win probabilities, based on statistical analysis of chess games.
+def eval_to_win_prob(eval_series):
 
-    Parameters:
-    -----------
-    eval_series : array-like
-        Chess position evaluations in centipawns (100 centipawns = 1 pawn advantage)
-        Can be a pandas Series, numpy array, or single numeric value
-
-    Returns:
-    --------
-    array with win probabilities as percentages (0-100)
-    """
     # Ensure we can handle single values or series
     eval_array = np.asarray(eval_series)
 
@@ -102,6 +66,8 @@ def eval_to_win_probability(eval_series):
 
     # Calculate win probability using logistic transformation
     win_prob = 50 + 50 * (2 / (1 + np.exp(-conversion_factor * eval_array)) - 1)
+
+
 
     return win_prob
 
