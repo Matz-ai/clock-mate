@@ -79,7 +79,7 @@ def preprocess_data(df_game= "df_game_info", df_moves= "df_moves"):
 
 
 #New Version
-def preproc_full(df_game_info, df_moves, include_df=False):
+def preproc_full(df_game_info, df_moves):
     #Inital delete
     deleted_games_features = [
         "Event", "Site", "Date", "Round", "White", "Black", "UTCDate",
@@ -137,12 +137,11 @@ def preproc_full(df_game_info, df_moves, include_df=False):
     df_full['rel_time'] = df_full['time_spent_s']/df_full['clock_s']
     df_full = df_full[df_full['rel_time'].notna()]
 
+    return df_full
+
+def create_X_y(df_full):
     X = df_full[['color', 'ply', 'WhiteWin', 'BlackWin', 'delta_eval', 'WhiteElo',
              'BlackElo', 'num_legal_moves', 'num_captures',
              'material_white', 'material_black', 'is_check', 'clock_s']]
     y = df_full[['rel_time']]
-
-    if include_df == True:
-        return df_full, X, y
-    else:
-        return X, y
+    return X, y
