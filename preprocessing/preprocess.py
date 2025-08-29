@@ -133,7 +133,8 @@ def preproc_full(df_game_info, df_moves, include_df=False):
     df_full["WhiteElo"] = df_full["WhiteElo"].astype(int)
     df_full["BlackElo"] = df_full["BlackElo"].astype(int)
 
-    df_full['rel_time'] = df_full['time_spent_s']/(df_full['clock_s'] + df_full['time_spent_s'])
+    df_full['clock_s'] = (df_full['clock_s'] + df_full['time_spent_s'])
+    df_full['rel_time'] = df_full['time_spent_s']/df_full['clock_s']
     df_full = df_full[df_full['rel_time'].notna()]
 
     X = df_full[['color', 'ply', 'WhiteWin', 'BlackWin', 'delta_eval', 'WhiteElo',
