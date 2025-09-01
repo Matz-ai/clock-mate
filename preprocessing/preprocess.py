@@ -183,4 +183,3 @@ def preproc_full(df_game_info, df_moves):
     df_full["phase"] = df_full["fen_before"].apply(phase_features_from_fen)
 
     return df_full
-
