@@ -1,5 +1,49 @@
 import pandas as pd
-from preprocessing.fen_transformation import delta_eval, chess_features
+from preprocessing.fen_transformation import delta_eval, chess_features,eval_to_win_prob
+import chess
+
+
+
+
+
+def phase_score_from_board(board: chess.Board) -> float:
+    """
+    Retourne un score de phase dans [0,1]:
+      1.0 = ouverture (matériel lourd complet)
+      0.0 = finale (presque plus de pièces lourdes)
+    """
+        # Poids "Stockfish-like" pour la PHASE (non-pions, par côté)
+    # N=1, B=1, R=2, Q=4  → phase totale au départ = 24 (12 par camp)
+    PHASE_WEIGHTS = {
+        chess.KNIGHT: 1,
+        chess.BISHOP: 1,
+        chess.ROOK:   2,
+        chess.QUEEN:  4
+    }
+    PHASE_TOTAL = 24  # 2*(2N*1 + 2B*1 + 2R*2 + 1Q*4) = 24
+
+    current_phase = 0
+    for piece_type, w in PHASE_WEIGHTS.items():
+        # compte les pièces des deux camps encore sur l'échiquier
+        cnt = len(board.pieces(piece_type, chess.WHITE)) + len(board.pieces(piece_type, chess.BLACK))
+        current_phase += w * cnt
+
+    # normalisation (clip pour sécurité)
+    return max(0.0, min(1.0, current_phase / PHASE_TOTAL))
+
+def phase_features_from_fen(fen: str):
+    """
+    Renvoie un petit paquet de features dérivées utiles.
+    """
+    board = chess.Board(fen)
+    phase = phase_score_from_board(board)          # [0,1]
+    mg_w  = phase                                   # poids "middlegame"
+    eg_w  = 1.0 - phase                             # poids "endgame"
+    has_queens = int(board.pieces(chess.QUEEN, chess.WHITE) or
+                      board.pieces(chess.QUEEN, chess.BLACK))
+    # on peut choisir de renvoyer + de features
+    return phase
+
 
 def preprocess_data(df_game= "df_game_info", df_moves= "df_moves"):
     """
@@ -18,7 +62,7 @@ def preprocess_data(df_game= "df_game_info", df_moves= "df_moves"):
     df_moves_copy = df_moves.copy()
     df_game_info_copy = df_game.copy()
 
-    df_moves_copy["win_probability"] = eval_to_win_probability(df_moves_copy["eval"])
+    df_moves_copy["win_probability"] = eval_to_win_prob(df_moves_copy["eval"])
     df_moves_copy["delta_eval"] = delta_eval(df_moves_copy)
 
     # Step 1: Drop unwanted game cadence from df_game_info
@@ -137,7 +181,11 @@ def preproc_full(df_game_info, df_moves):
     df_full['rel_time'] = df_full['time_spent_s']/df_full['clock_s']
     df_full = df_full[df_full['rel_time'].notna()]
 
+    df_full["phase"] = df_full["fen_before"].apply(phase_features_from_fen)
+
     return df_full
+
+
 
 def create_X_y(df_full):
     X = df_full[['color', 'ply', 'WhiteWin', 'BlackWin', 'delta_eval', 'WhiteElo',
