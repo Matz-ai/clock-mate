@@ -2,10 +2,6 @@ import pandas as pd
 from preprocessing.fen_transformation import delta_eval, chess_features,eval_to_win_prob
 import chess
 
-
-
-
-
 def phase_score_from_board(board: chess.Board) -> float:
     """
     Retourne un score de phase dans [0,1]:
@@ -181,15 +177,10 @@ def preproc_full(df_game_info, df_moves):
     df_full['rel_time'] = df_full['time_spent_s']/df_full['clock_s']
     df_full = df_full[df_full['rel_time'].notna()]
 
+    df_full['diff_elo'] = abs(df_full['WhiteElo'] - df_full['BlackElo'])
+
+
     df_full["phase"] = df_full["fen_before"].apply(phase_features_from_fen)
 
     return df_full
 
-
-
-def create_X_y(df_full):
-    X = df_full[['color', 'ply', 'WhiteWin', 'BlackWin', 'delta_eval', 'WhiteElo',
-             'BlackElo', 'num_legal_moves', 'num_captures',
-             'material_white', 'material_black', 'is_check', 'clock_s']]
-    y = df_full[['rel_time']]
-    return X, y
