@@ -180,6 +180,22 @@ def preproc_full(df_game_info, df_moves):
     df_full['diff_elo'] = abs(df_full['WhiteElo'] - df_full['BlackElo'])
 
 
-    df_full["phase"] = df_full["fen_before"].apply(phase_features_from_fen)
+def create_X_y(df_full):
+    X = df_full[['color', 'ply', 'WhiteWin', 'BlackWin', 'delta_eval', 'WhiteElo',
+             'BlackElo', 'num_legal_moves', 'num_captures',
+             'material_white', 'material_black', 'is_check', 'clock_s']]
+    y = df_full[['rel_time']]
+    return X, y
 
-    return df_full
+def train_test_split_games(df_full, split = .85):
+    train_index = round(df_full['game_id'].nunique() * split)
+
+    train_ids = df_full['game_id'].unique()[:train_index]
+    test_ids = df_full['game_id'].unique()[train_index:]
+
+    train_df_full = df_full[df_full['game_id'].isin(train_ids)]
+    test_df_full = df_full[df_full['game_id'].isin(test_ids)]
+
+    return train_df_full, test_df_full
+
+
