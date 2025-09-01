@@ -178,6 +178,9 @@ def preproc_full(df_game_info, df_moves):
     df_full = df_full[df_full['rel_time'].notna()]
 
     df_full['diff_elo'] = abs(df_full['WhiteElo'] - df_full['BlackElo'])
+    df_full["phase"] = df_full["fen_before"].apply(phase_features_from_fen)
+
+    return df_full
 
 
 def create_X_y(df_full):
@@ -197,5 +200,3 @@ def train_test_split_games(df_full, split = .85):
     test_df_full = df_full[df_full['game_id'].isin(test_ids)]
 
     return train_df_full, test_df_full
-
-
