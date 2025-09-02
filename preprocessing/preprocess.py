@@ -1,5 +1,5 @@
 import pandas as pd
-from preprocessing.fen_transformation import delta_eval, chess_features,eval_to_win_prob
+from preprocessing.fen_transformation import delta_eval, chess_features,eval_to_win_prob, king_safety, pawn_structure, space_advantage, extract_features_from_fen
 import chess
 
 def phase_score_from_board(board: chess.Board) -> float:
@@ -179,6 +179,8 @@ def preproc_full(df_game_info, df_moves):
 
     df_full['diff_elo'] = abs(df_full['WhiteElo'] - df_full['BlackElo'])
     df_full["phase"] = df_full["fen_before"].apply(phase_features_from_fen)
+
+    df_full = df_full.join(df_full.apply(extract_features_from_fen, axis=1))
 
     return df_full
 

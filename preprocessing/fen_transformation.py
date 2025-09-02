@@ -110,3 +110,96 @@ def chess_features(df):
     df['is_check'] = is_check_list
 
     return df
+
+
+def king_safety(board: chess.Board, color: chess.Color) -> int:
+    king_sq = board.king(color)
+    if king_sq is None:  # cas rare : roi absent (mat, erreur FEN)
+        return 8
+
+    # Générer les 8 cases autour du roi
+    files = [-1, 0, 1]
+    ranks = [-1, 0, 1]
+    king_file = chess.square_file(king_sq)
+    king_rank = chess.square_rank(king_sq)
+
+    king_zone = []
+    for df in files:
+        for dr in ranks:
+            if df == 0 and dr == 0:
+                continue
+            f, r = king_file + df, king_rank + dr
+            if 0 <= f <= 7 and 0 <= r <= 7:
+                king_zone.append(chess.square(f, r))
+
+    # Compter les attaques sur ces cases
+    opp_color = not color
+    return sum(board.is_attacked_by(opp_color, sq) for sq in king_zone)
+
+
+# --- Pawn structure ---
+def pawn_structure(board: chess.Board, color: chess.Color):
+    pawns = board.pieces(chess.PAWN, color)
+    doubled, isolated, passed = 0, 0, 0
+
+    for sq in pawns:
+        file = chess.square_file(sq)
+        rank = chess.square_rank(sq)
+
+        # doubled pawns
+        if any(chess.square(file, r) in pawns for r in range(8) if r != rank):
+            doubled += 1
+
+        # isolated pawns
+        neighbor_files = [f for f in [file-1, file+1] if 0 <= f <= 7]
+        has_neighbor = any(
+            board.pieces(chess.PAWN, color) & chess.SquareSet(chess.BB_FILES[f])
+            for f in neighbor_files
+        )
+        if not has_neighbor:
+            isolated += 1
+
+        # passed pawns
+        opp_pawns = board.pieces(chess.PAWN, not color)
+        opp_in_front = [
+            sq2 for sq2 in opp_pawns
+            if chess.square_file(sq2) in [file-1, file, file+1] and
+               ((color == chess.WHITE and chess.square_rank(sq2) > rank) or
+                (color == chess.BLACK and chess.square_rank(sq2) < rank))
+        ]
+        if not opp_in_front:
+            passed += 1
+
+    return doubled, isolated, passed
+
+# --- Space advantage ---
+def space_advantage(board: chess.Board, color: chess.Color) -> int:
+    opp_half = range(4, 8) if color == chess.WHITE else range(0, 4)
+    controlled = 0
+    for sq in chess.SQUARES:
+        rank = chess.square_rank(sq)
+        if rank in opp_half and board.is_attacked_by(color, sq):
+            controlled += 1
+    return controlled
+
+# --- Extraction globale ---
+def extract_features_from_fen(row):
+    board = chess.Board(row["fen_before"])
+    color = chess.WHITE if row["color"] == 1 else chess.BLACK  # si color=1=blanc, 0=noir
+
+    # king safety
+    king = king_safety(board, color)
+
+    # pawn structure
+    doubled, isolated, passed = pawn_structure(board, color)
+
+    # space advantage
+    space = space_advantage(board, color)
+
+    return pd.Series({
+        "king_safety": king,
+        "pawns_doubled": doubled,
+        "pawns_isolated": isolated,
+        "pawns_passed": passed,
+        "space_advantage": space
+    })
