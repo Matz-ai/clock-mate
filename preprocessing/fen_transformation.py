@@ -185,7 +185,7 @@ def space_advantage(board: chess.Board, color: chess.Color) -> int:
 # --- Extraction globale ---
 def extract_features_from_fen(row):
     board = chess.Board(row["fen_before"])
-    color = chess.WHITE if row["color"] == 1 else chess.BLACK  # si color=1=blanc, 0=noir
+    color = chess.WHITE if row["color"] == 0 else chess.BLACK
 
     # king safety
     king = king_safety(board, color)
